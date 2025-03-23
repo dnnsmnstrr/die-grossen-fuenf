@@ -82,16 +82,22 @@ export default function RankingsList() {
   return (
     <>
       <div className="bg-white rounded-lg shadow-md p-4 mb-8">
-        <div className={`flex ${isFiltersOpen ? 'mb-4' : ''} justify-between items-center`}>
-          <button 
-            onClick={() => setIsFiltersOpen(!isFiltersOpen)} 
+        <div
+          className={`flex ${
+            isFiltersOpen ? "mb-4" : ""
+          } justify-between items-center`}
+        >
+          <button
+            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
             className="flex items-center gap-2 hover:text-blue-600 transition-colors"
           >
             <Filter size={20} className="text-gray-500" />
             <h2 className="text-lg font-semibold">Filter</h2>
-            <ChevronDown 
-              size={20} 
-              className={`text-gray-500 transform transition-transform duration-200 ${isFiltersOpen ? 'rotate-180' : ''}`} 
+            <ChevronDown
+              size={20}
+              className={`text-gray-500 transform transition-transform duration-200 ${
+                isFiltersOpen ? "rotate-180" : ""
+              }`}
             />
           </button>
 
@@ -107,14 +113,19 @@ export default function RankingsList() {
           </div>
 
           <div className="flex items-center gap-2">
-            <label htmlFor="sort" className="hidden sm:block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="sort"
+              className="hidden sm:block text-sm font-medium text-gray-700"
+            >
               Sortierung
             </label>
             <select
               id="sort"
               className="w-full rounded-md border-gray-300 shadow-sm p-2 focus:border-blue-500 focus:ring-blue-500"
               value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value as 'newest' | 'oldest')}
+              onChange={(e) =>
+                setSortOrder(e.target.value as "newest" | "oldest")
+              }
             >
               <option value="newest">Neueste zuerst</option>
               <option value="oldest">Älteste zuerst</option>
@@ -208,40 +219,60 @@ export default function RankingsList() {
                 </div>
               </div>
 
-              <div className={`grid md:grid-cols-2 ${ranking.guest_name ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-6`}>
-                <div className={`space-y-4 ${!ranking.guest_name ? 'lg:col-span-1' : ''}`}>
-                  <h3 className="text-xl font-semibold text-blue-600">Jan</h3>
-                  <ol className="space-y-3">
-                    {ranking.jan_items.map((item, index) => (
-                      <li key={index} className="flex items-start">
-                        <span className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 text-sm font-semibold mr-3">
-                          {5 - index}
-                        </span>
-                        <span className="text-gray-700 pt-1">{item}</span>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
+              <div
+                className={`grid md:grid-cols-2 ${
+                  ranking.guest_name ? "lg:grid-cols-3" : "lg:grid-cols-2"
+                } gap-6`}
+              >
+                {ranking.jan_items?.length > 0 && (
+                  <div
+                    className={`space-y-4 ${
+                      !ranking.guest_name ? "lg:col-span-1" : ""
+                    }`}
+                  >
+                    <h3 className="text-xl font-semibold text-blue-600">Jan</h3>
+                    <ol className="space-y-3">
+                      {ranking.jan_items.map((item, index) => (
+                        <li key={index} className="flex items-start">
+                          <span className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 text-sm font-semibold mr-3">
+                            {5 - index}
+                          </span>
+                          <span className="text-gray-700 pt-1">{item}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
 
-                <div className={`space-y-4 ${!ranking.guest_name ? 'lg:col-span-1' : ''}`}>
-                  <h3 className="text-xl font-semibold text-green-600">Olli</h3>
-                  <ol className="space-y-3">
-                    {ranking.olli_items.map((item, index) => (
-                      <li key={index} className="flex items-start">
-                        <span className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600 text-sm font-semibold mr-3">
-                          {5 - index}
-                        </span>
-                        <span className="text-gray-700 pt-1">{item}</span>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-
-                {ranking.guest_name && ranking.guest_items && (
-                  <div className="space-y-4">
-                    <h3 className="text-xl font-semibold text-purple-600">
-                      {ranking.guest_name}
+                {ranking.olli_items?.length > 0 && (
+                  <div
+                    className={`space-y-4 ${
+                      !ranking.guest_name ? "lg:col-span-1" : ""
+                    }`}
+                  >
+                    <h3 className="text-xl font-semibold text-green-600">
+                      Olli
                     </h3>
+                    <ol className="space-y-3">
+                      {ranking.olli_items.map((item, index) => (
+                        <li key={index} className="flex items-start">
+                          <span className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600 text-sm font-semibold mr-3">
+                            {5 - index}
+                          </span>
+                          <span className="text-gray-700 pt-1">{item}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+
+                {ranking.guest_items && ranking.guest_items?.length > 0 && (
+                  <div className="space-y-4">
+                    {ranking.guest_name && (
+                      <h3 className="text-xl font-semibold text-purple-600">
+                        {ranking.guest_name || "Gast"}
+                      </h3>
+                    )}
                     <ol className="space-y-3">
                       {ranking.guest_items.map((item, index) => (
                         <li key={index} className="flex items-start">
