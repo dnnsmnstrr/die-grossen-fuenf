@@ -5,17 +5,18 @@ import { supabase, type UserRanking } from '../lib/supabase';
 export default function UserRankings() {
   const [rankings, setRankings] = useState<UserRanking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortByLikes, setSortByLikes] = useState(false);
 
   useEffect(() => {
     fetchRankings();
-  }, []);
+  }, [sortByLikes]);
 
   async function fetchRankings() {
     try {
       const { data, error } = await supabase
         .from('user_rankings')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order(sortByLikes ? 'likes' : 'created_at', { ascending: false });
 
       if (error) throw error;
       setRankings(data || []);
@@ -23,6 +24,29 @@ export default function UserRankings() {
       console.error('Error fetching rankings:', error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleLike(rankingId: string) {
+    try {
+      // First, update the UI optimistically
+      setRankings(rankings.map(ranking => 
+        ranking.id === rankingId 
+          ? { ...ranking, likes: ranking.likes + 1 }
+          : ranking
+      ));
+
+      // Then, update the database
+      const { error } = await supabase
+        .from('user_rankings')
+        .update({ likes: rankings.find(r => r.id === rankingId)!.likes + 1 })
+        .eq('id', rankingId);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error updating likes:', error);
+      // Revert the optimistic update if there's an error
+      await fetchRankings();
     }
   }
 
@@ -36,7 +60,18 @@ export default function UserRankings() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">Community Rankings</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-800">Community Rankings</h2>
+        <button
+          onClick={() => {
+            setSortByLikes(!sortByLikes);
+            // fetchRankings();
+          }}
+          className="px-4 py-2 text-sm rounded-md bg-gray-100 hover:bg-gray-200 transition-colors"
+        >
+          {sortByLikes ? 'Nach Beliebtheit' : 'Neueste zuerst'}
+        </button>
+      </div>
       
       {rankings.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
@@ -52,10 +87,13 @@ export default function UserRankings() {
                   <Clock size={16} />
                   <span>{new Date(ranking.created_at).toLocaleDateString('de-DE')}</span>
                 </div>
-                <div className="flex items-center gap-1">
+                <button 
+                  onClick={() => handleLike(ranking.id)}
+                  className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+                >
                   <ThumbsUp size={16} />
                   <span>{ranking.likes}</span>
-                </div>
+                </button>
               </div>
             </div>
 
