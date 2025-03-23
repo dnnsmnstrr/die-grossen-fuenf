@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Clock, ThumbsUp } from 'lucide-react';
 import { supabase, type UserRanking } from '../lib/supabase';
 
