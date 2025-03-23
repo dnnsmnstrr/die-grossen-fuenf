@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Filter } from 'lucide-react';
 import { RankingCard } from '../components/RankingCard';
 import { supabase } from '../lib/supabase';
@@ -70,28 +70,28 @@ export default function RankingsList() {
           <h2 className="text-lg font-semibold">Filter</h2>
         </div>
         
-        <div className="grid md:grid-cols-3 gap-4">
-          <div>
+        <div className="grid md:grid-cols-12 gap-4">
+          <div className="md:col-span-5">
             <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
               Suche
             </label>
             <input
               type="text"
               id="search"
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="w-full rounded-md border-gray-300 shadow-sm p-2 focus:border-blue-500 focus:ring-blue-500"
               placeholder="Nach Thema oder Folge suchen..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
 
-          <div>
-            <label htmlFor="year" className="block text-sm font-medium text-gray-700 mb-1">
+          <div className="md:col-span-3">
+            <label htmlFor="year" className="block text-sm font-medium  text-gray-700 mb-1">
               Jahr
             </label>
             <select
               id="year"
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="w-full rounded-md border-gray-300 shadow-sm p-2 focus:border-blue-500 focus:ring-blue-500"
               value={yearFilter}
               onChange={(e) => setYearFilter(e.target.value)}
             >
@@ -102,13 +102,13 @@ export default function RankingsList() {
             </select>
           </div>
 
-          <div>
+          <div className="md:col-span-4">
             <label htmlFor="guest" className="block text-sm font-medium text-gray-700 mb-1">
               Gast
             </label>
             <select
               id="guest"
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="w-full rounded-md border-gray-300 shadow-sm p-2 focus:border-blue-500 focus:ring-blue-500"
               value={guestFilter}
               onChange={(e) => setGuestFilter(e.target.value)}
             >
