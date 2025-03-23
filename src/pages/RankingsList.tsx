@@ -87,7 +87,7 @@ export default function RankingsList() {
             <h2 className="text-lg font-semibold">Filter</h2>
           </div>
           <div className="flex items-center gap-2">
-            <label htmlFor="sort" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="sort" className="hidden sm:block text-sm font-medium text-gray-700 mb-1">
               Sortierung
             </label>
             <select
@@ -185,8 +185,8 @@ export default function RankingsList() {
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="space-y-4">
+              <div className={`grid md:grid-cols-2 ${ranking.guest_name ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-6`}>
+                <div className={`space-y-4 ${!ranking.guest_name ? 'lg:col-span-1' : ''}`}>
                   <h3 className="text-xl font-semibold text-blue-600">Jan</h3>
                   <ol className="space-y-3">
                     {ranking.jan_items.map((item, index) => (
@@ -200,7 +200,7 @@ export default function RankingsList() {
                   </ol>
                 </div>
 
-                <div className="space-y-4">
+                <div className={`space-y-4 ${!ranking.guest_name ? 'lg:col-span-1' : ''}`}>
                   <h3 className="text-xl font-semibold text-green-600">Olli</h3>
                   <ol className="space-y-3">
                     {ranking.olli_items.map((item, index) => (
