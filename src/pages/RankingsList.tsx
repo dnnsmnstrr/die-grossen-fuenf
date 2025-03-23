@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Filter } from "lucide-react";
+import { Filter, ChevronDown } from "lucide-react";
 import { RankingCard } from "../components/RankingCard";
 import { supabase } from "../lib/supabase";
 import type { PodcastRanking } from "../lib/types";
@@ -11,6 +11,7 @@ export default function RankingsList() {
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [rankings, setRankings] = useState<PodcastRanking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
   useEffect(() => {
     fetchRankings();
@@ -81,11 +82,18 @@ export default function RankingsList() {
   return (
     <>
       <div className="bg-white rounded-lg shadow-md p-4 mb-8">
-        <div className="flex mb-4 justify-between">
-          <div className="flex items-center gap-2">
+        <div className={`flex ${isFiltersOpen ? 'mb-4' : ''} justify-between`}>
+          <button 
+            onClick={() => setIsFiltersOpen(!isFiltersOpen)} 
+            className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+          >
             <Filter size={20} className="text-gray-500" />
             <h2 className="text-lg font-semibold">Filter</h2>
-          </div>
+            <ChevronDown 
+              size={20} 
+              className={`text-gray-500 transform transition-transform duration-200 ${isFiltersOpen ? 'rotate-180' : ''}`} 
+            />
+          </button>
           <div className="flex items-center gap-2">
             <label htmlFor="sort" className="hidden sm:block text-sm font-medium text-gray-700 mb-1">
               Sortierung
@@ -102,68 +110,70 @@ export default function RankingsList() {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-12 gap-4">
-          <div className="md:col-span-5">
-            <label
-              htmlFor="search"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Suche
-            </label>
-            <input
-              type="text"
-              id="search"
-              className="w-full rounded-md border-gray-300 shadow-sm p-2 focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Nach Thema oder Folge suchen..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+        {isFiltersOpen && (
+          <div className="grid md:grid-cols-12 gap-4">
+            <div className="md:col-span-5">
+              <label
+                htmlFor="search"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Suche
+              </label>
+              <input
+                type="text"
+                id="search"
+                className="w-full rounded-md border-gray-300 shadow-sm p-2 focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Nach Thema oder Folge suchen..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
 
-          <div className="md:col-span-3">
-            <label
-              htmlFor="year"
-              className="block text-sm font-medium  text-gray-700 mb-1"
-            >
-              Jahr
-            </label>
-            <select
-              id="year"
-              className="w-full rounded-md border-gray-300 shadow-sm p-2 focus:border-blue-500 focus:ring-blue-500"
-              value={yearFilter}
-              onChange={(e) => setYearFilter(e.target.value)}
-            >
-              <option value="">Alle Jahre</option>
-              {years.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
-          </div>
+            <div className="md:col-span-3">
+              <label
+                htmlFor="year"
+                className="block text-sm font-medium  text-gray-700 mb-1"
+              >
+                Jahr
+              </label>
+              <select
+                id="year"
+                className="w-full rounded-md border-gray-300 shadow-sm p-2 focus:border-blue-500 focus:ring-blue-500"
+                value={yearFilter}
+                onChange={(e) => setYearFilter(e.target.value)}
+              >
+                <option value="">Alle Jahre</option>
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <div className="md:col-span-4">
-            <label
-              htmlFor="guest"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Gast
-            </label>
-            <select
-              id="guest"
-              className="w-full rounded-md border-gray-300 shadow-sm p-2 focus:border-blue-500 focus:ring-blue-500"
-              value={guestFilter}
-              onChange={(e) => setGuestFilter(e.target.value)}
-            >
-              <option value="">Alle Gäste</option>
-              {guests.map((guest) => (
-                <option key={guest} value={guest}>
-                  {guest}
-                </option>
-              ))}
-            </select>
+            <div className="md:col-span-4">
+              <label
+                htmlFor="guest"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Gast
+              </label>
+              <select
+                id="guest"
+                className="w-full rounded-md border-gray-300 shadow-sm p-2 focus:border-blue-500 focus:ring-blue-500"
+                value={guestFilter}
+                onChange={(e) => setGuestFilter(e.target.value)}
+              >
+                <option value="">Alle Gäste</option>
+                {guests.map((guest) => (
+                  <option key={guest} value={guest}>
+                    {guest}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="space-y-6">
