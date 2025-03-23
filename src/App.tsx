@@ -36,7 +36,7 @@ function App() {
                       className="text-white hover:text-blue-200 transition block"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      Rankings
+                      Community Rankings
                     </Link>
                   </li>
                   <li>

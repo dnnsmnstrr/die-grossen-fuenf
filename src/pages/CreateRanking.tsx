@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, Loader2 } from 'lucide-react';
 import OpenAI from 'openai';
@@ -23,10 +23,10 @@ export default function CreateRanking() {
       const completion = await openai.chat.completions.create({
         messages: [{
           role: "system",
-          content: "Du bist ein Assistent, der hilft, interessante Themen für ein Podcast-Ranking-Segment namens 'Die Großen 5' zu generieren. Generiere kreative und unterhaltsame Themen auf Deutsch."
+          content: "Du bist ein Assistent, der hilft, interessante und lustige Themen für ein Podcast-Ranking-Segment namens 'Die Großen 5' zu generieren. Generiere kreative und unterhaltsame Themen auf Deutsch. Es sollten offene Fragestellungen sein, die nicht nur eindeutige Möglichkeiten oder Fakten hervorrufen. Halte dich kurz und prägnant, außer ein längerer Satz ist unbedingt notwendig um die Situation zu erklären. Lasse 'die großen 5' im Titel weg und formuliere es so, dass der Satz fortgeführt wird, ohne Bindestrich oder andere Zeichen. Es soll keine Frage sein, also so etwas wie (Die großen 5) 'Dinge, die man in seinem Leben mal gemacht haben sollte"
         }, {
           role: "user",
-          content: "Generiere 3 interessante Themen für 'Die Großen 5' Rankings."
+          content: "Generiere 3 interessante Themen für 'Die Großen 5' Rankings, mit einer Leerzeile zwischen jedem Vorschlag. Wenn die Eingabe sinnvoll oder relevant erscheint, sollten sich die Vorschläge daran orientieren. Nutzereingabe: " + topic
         }],
         model: "gpt-3.5-turbo",
       });
@@ -51,27 +51,47 @@ export default function CreateRanking() {
     setRankings(newRankings);
   };
 
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (index === rankings.length - 1) {
+        // On the last input field, submit if all fields are filled
+        if (topic && rankings.every(r => r)) {
+          handleSubmit();
+        }
+      } else {
+        // Focus the next input field
+        const nextInput = document.querySelector(`input[data-index="${index + 1}"]`) as HTMLInputElement;
+        if (nextInput) nextInput.focus();
+      }
+    }
+  };
+
   const handleSubmit = async () => {
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user) {
-        alert('Bitte melde dich an, um dein Ranking zu speichern');
-        return;
+      // if (!user) {
+      //   alert('Bitte melde dich an, um dein Ranking zu speichern');
+      //   return;
+      // }
+      let userId = window.localStorage.getItem('userId');
+      if (!userId) {
+        userId = crypto.randomUUID();
+        window.localStorage.setItem('userId', userId);
       }
-
       const { error } = await supabase
         .from('user_rankings')
         .insert({
           topic,
           items: rankings,
-          user_id: user.id
+          user_id: window.localStorage.getItem('userId')
         });
 
       if (error) throw error;
       
-      navigate('/community');
+      navigate('/rankings');
     } catch (error) {
       console.error('Error saving ranking:', error);
       alert('Fehler beim Speichern des Rankings. Bitte versuche es erneut.');
@@ -95,7 +115,7 @@ export default function CreateRanking() {
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               placeholder="Gib ein Thema ein oder lass dir Vorschläge machen..."
-              className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="flex-1 px-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />
             <button
               onClick={generateSuggestions}
@@ -132,7 +152,7 @@ export default function CreateRanking() {
         <div className="space-y-4">
           <h3 className="text-lg font-medium text-gray-700">Dein Ranking:</h3>
           {rankings.map((item, index) => (
-            <div key={index} className="flex items-start">
+            <div key={index} className="flex items-center">
               <span className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 font-semibold mr-3">
                 {5 - index}
               </span>
@@ -140,8 +160,10 @@ export default function CreateRanking() {
                 type="text"
                 value={item}
                 onChange={(e) => handleRankingChange(index, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(index, e)}
+                data-index={index}
                 placeholder={`Platz ${5 - index}...`}
-                className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="flex-1 p-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
           ))}
