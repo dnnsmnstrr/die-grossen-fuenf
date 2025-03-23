@@ -82,7 +82,7 @@ export default function RankingsList() {
   return (
     <>
       <div className="bg-white rounded-lg shadow-md p-4 mb-8">
-        <div className={`flex ${isFiltersOpen ? 'mb-4' : ''} justify-between`}>
+        <div className={`flex ${isFiltersOpen ? 'mb-4' : ''} justify-between items-center`}>
           <button 
             onClick={() => setIsFiltersOpen(!isFiltersOpen)} 
             className="flex items-center gap-2 hover:text-blue-600 transition-colors"
@@ -94,8 +94,20 @@ export default function RankingsList() {
               className={`text-gray-500 transform transition-transform duration-200 ${isFiltersOpen ? 'rotate-180' : ''}`} 
             />
           </button>
+
+          {/* Search bar - hidden on mobile, shown between buttons on desktop */}
+          <div className="hidden md:block flex-1 mx-4 max-w-md">
+            <input
+              type="text"
+              className="w-full rounded-md border-gray-300 shadow-sm p-2 focus:border-blue-500 focus:ring-blue-500"
+              placeholder="Nach Thema oder Folge suchen..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
           <div className="flex items-center gap-2">
-            <label htmlFor="sort" className="hidden sm:block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="sort" className="hidden sm:block text-sm font-medium text-gray-700">
               Sortierung
             </label>
             <select
@@ -111,8 +123,9 @@ export default function RankingsList() {
         </div>
 
         {isFiltersOpen && (
-          <div className="grid md:grid-cols-12 gap-4">
-            <div className="md:col-span-5">
+          <div className="grid md:grid-cols-8 gap-4">
+            {/* Search bar - shown only on mobile */}
+            <div className="md:hidden col-span-full">
               <label
                 htmlFor="search"
                 className="block text-sm font-medium text-gray-700 mb-1"
@@ -129,10 +142,10 @@ export default function RankingsList() {
               />
             </div>
 
-            <div className="md:col-span-3">
+            <div className="md:col-span-4">
               <label
                 htmlFor="year"
-                className="block text-sm font-medium  text-gray-700 mb-1"
+                className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Jahr
               </label>
