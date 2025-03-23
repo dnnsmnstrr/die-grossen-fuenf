@@ -1,13 +1,14 @@
-import { useState, useMemo, useEffect } from 'react';
-import { Filter } from 'lucide-react';
-import { RankingCard } from '../components/RankingCard';
-import { supabase } from '../lib/supabase';
-import type { PodcastRanking } from '../lib/types';
+import { useState, useMemo, useEffect } from "react";
+import { Filter } from "lucide-react";
+import { RankingCard } from "../components/RankingCard";
+import { supabase } from "../lib/supabase";
+import type { PodcastRanking } from "../lib/types";
 
 export default function RankingsList() {
-  const [yearFilter, setYearFilter] = useState<string>('');
-  const [guestFilter, setGuestFilter] = useState<string>('');
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [yearFilter, setYearFilter] = useState<string>("");
+  const [guestFilter, setGuestFilter] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [rankings, setRankings] = useState<PodcastRanking[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,41 +19,56 @@ export default function RankingsList() {
   async function fetchRankings() {
     try {
       const { data, error } = await supabase
-        .from('podcast_rankings')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .from("podcast_rankings")
+        .select("*")
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setRankings(data || []);
     } catch (error) {
-      console.error('Error fetching rankings:', error);
+      console.error("Error fetching rankings:", error);
     } finally {
       setLoading(false);
     }
   }
 
   const years = useMemo(() => {
-    return Array.from(new Set(rankings.map(r => r.year))).sort().reverse();
+    return Array.from(new Set(rankings.map((r) => r.year)))
+      .sort()
+      .reverse();
   }, [rankings]);
 
   const guests = useMemo(() => {
-    return Array.from(new Set(rankings
-      .filter(r => r.guest_name)
-      .map(r => r.guest_name as string)))
-      .sort();
+    return Array.from(
+      new Set(
+        rankings.filter((r) => r.guest_name).map((r) => r.guest_name as string)
+      )
+    ).sort();
   }, [rankings]);
 
   const filteredRankings = useMemo(() => {
-    return rankings.filter(ranking => {
+    let results = rankings.filter((ranking) => {
       const matchesYear = !yearFilter || ranking.year.toString() === yearFilter;
       const matchesGuest = !guestFilter || ranking.guest_name === guestFilter;
-      const matchesSearch = !searchQuery || 
+      const matchesSearch =
+        !searchQuery ||
         ranking.topic.toLowerCase().includes(searchQuery.toLowerCase()) ||
         ranking.episode.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       return matchesYear && matchesGuest && matchesSearch;
     });
-  }, [rankings, yearFilter, guestFilter, searchQuery]);
+
+    // Apply sorting
+    results = [...results].sort((a, b) => {
+      const dateA = new Date(a.created_at);
+      const dateB = new Date(b.created_at);
+      return sortOrder === "newest"
+        ? dateB.getTime() - dateA.getTime()
+        : dateA.getTime() - dateB.getTime();
+    });
+
+    return results;
+  }, [rankings, yearFilter, guestFilter, searchQuery, sortOrder]);
 
   if (loading) {
     return (
@@ -65,14 +81,33 @@ export default function RankingsList() {
   return (
     <>
       <div className="bg-white rounded-lg shadow-md p-4 mb-8">
-        <div className="flex items-center gap-2 mb-4">
-          <Filter size={20} className="text-gray-500" />
-          <h2 className="text-lg font-semibold">Filter</h2>
+        <div className="flex mb-4 justify-between">
+          <div className="flex items-center gap-2">
+            <Filter size={20} className="text-gray-500" />
+            <h2 className="text-lg font-semibold">Filter</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <label htmlFor="sort" className="block text-sm font-medium text-gray-700 mb-1">
+              Sortierung
+            </label>
+            <select
+              id="sort"
+              className="w-full rounded-md border-gray-300 shadow-sm p-2 focus:border-blue-500 focus:ring-blue-500"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as 'newest' | 'oldest')}
+            >
+              <option value="newest">Neueste zuerst</option>
+              <option value="oldest">Älteste zuerst</option>
+            </select>
+          </div>
         </div>
-        
+
         <div className="grid md:grid-cols-12 gap-4">
           <div className="md:col-span-5">
-            <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="search"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Suche
             </label>
             <input
@@ -86,7 +121,10 @@ export default function RankingsList() {
           </div>
 
           <div className="md:col-span-3">
-            <label htmlFor="year" className="block text-sm font-medium  text-gray-700 mb-1">
+            <label
+              htmlFor="year"
+              className="block text-sm font-medium  text-gray-700 mb-1"
+            >
               Jahr
             </label>
             <select
@@ -96,14 +134,19 @@ export default function RankingsList() {
               onChange={(e) => setYearFilter(e.target.value)}
             >
               <option value="">Alle Jahre</option>
-              {years.map(year => (
-                <option key={year} value={year}>{year}</option>
+              {years.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
               ))}
             </select>
           </div>
 
           <div className="md:col-span-4">
-            <label htmlFor="guest" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="guest"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Gast
             </label>
             <select
@@ -113,8 +156,10 @@ export default function RankingsList() {
               onChange={(e) => setGuestFilter(e.target.value)}
             >
               <option value="">Alle Gäste</option>
-              {guests.map(guest => (
-                <option key={guest} value={guest}>{guest}</option>
+              {guests.map((guest) => (
+                <option key={guest} value={guest}>
+                  {guest}
+                </option>
               ))}
             </select>
           </div>
@@ -130,7 +175,9 @@ export default function RankingsList() {
           filteredRankings.map((ranking) => (
             <div key={ranking.id} className="bg-white rounded-lg shadow-lg p-6">
               <div className="mb-4">
-                <h2 className="text-2xl font-bold text-gray-800">{ranking.topic}</h2>
+                <h2 className="text-2xl font-bold text-gray-800">
+                  {ranking.topic}
+                </h2>
                 <div className="flex items-center gap-2 text-gray-600 mt-2">
                   <span className="text-sm">{ranking.episode}</span>
                   <span className="text-sm">•</span>
