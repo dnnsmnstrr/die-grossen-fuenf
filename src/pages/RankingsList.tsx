@@ -165,7 +165,10 @@ export default function RankingsList() {
                 id="year"
                 className="w-full rounded-md border-gray-300 shadow-sm p-2 focus:border-blue-500 focus:ring-blue-500"
                 value={yearFilter}
-                onChange={(e) => setYearFilter(e.target.value)}
+                onChange={(e) => {
+                  setYearFilter(e.target.value);
+                  setSearchQuery("");
+                }}
               >
                 <option value="">Alle Jahre</option>
                 {years.map((year) => (
@@ -187,7 +190,10 @@ export default function RankingsList() {
                 id="guest"
                 className="w-full rounded-md border-gray-300 shadow-sm p-2 focus:border-blue-500 focus:ring-blue-500"
                 value={guestFilter}
-                onChange={(e) => setGuestFilter(e.target.value)}
+                onChange={(e) => {
+                  setGuestFilter(e.target.value);
+                  setSearchQuery("");
+                }}
               >
                 <option value="">Alle Gäste</option>
                 {guests.map((guest) => (
