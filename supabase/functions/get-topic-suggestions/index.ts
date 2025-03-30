@@ -9,20 +9,28 @@ Deno.serve(async (req) => {
   const { input } = await req.json();
   
   // Call OpenAI API for topic suggestions
-  const response = await fetch("https://api.openai.com/v1/engines/davinci/completions", {
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${Deno.env.get("VITE_OPENAI_KEY")}`,
     },
     body: JSON.stringify({
-      prompt: `Suggest topics based on: ${input}`,
-      max_tokens: 50,
+      messages: [{
+        role: "system",
+        content: "Du bist ein Assistent, der hilft, interessante und lustige Themen für ein Podcast-Ranking-Segment namens 'Die Großen 5' zu generieren. Generiere kreative und unterhaltsame Themen auf Deutsch. Es sollten offene Fragestellungen sein, die nicht nur eindeutige Möglichkeiten oder Fakten hervorrufen. Halte dich kurz und prägnant, außer ein längerer Satz ist unbedingt notwendig um die Situation zu erklären. Lasse 'die großen 5' im Titel weg und formuliere es so, dass der Satz fortgeführt wird, ohne Bindestrich oder andere Zeichen, auch keine Nummerierung am Anfang. Es soll keine Frage sein, also so etwas wie (Die großen 5) 'Dinge, die man in seinem Leben mal gemacht haben sollte"
+      }, {
+        role: "user",
+        content: "Generiere 3 interessante Themen für 'Die Großen 5' Rankings, mit einer Leerzeile zwischen jedem Vorschlag. Wenn die Eingabe sinnvoll oder relevant erscheint, sollten sich die Vorschläge daran orientieren. Nutzereingabe: " + input
+      }],
+      max_tokens: 150,
+      temperature: 0.7,
+      model: "gpt-3.5-turbo",
     }),
   });
-  
   const data = await response.json();
-  const suggestions = data.choices && data.choices[0].text.trim().split("\n") || [];
+  const suggestions = data.choices && data.choices[0].message.content.trim().split("\n") || [];
+  // console.log(suggestions)
   
   // Save suggestions to the database
   // const { error } = await supabase
@@ -33,7 +41,7 @@ Deno.serve(async (req) => {
   //   return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   // }
   
-  return new Response(JSON.stringify({ suggestions }), { status: 200 });
+  return new Response(JSON.stringify({ suggestions }), { status: 200, headers: { 'Content-Type': 'application/json' }, });
 })
 
 /* To invoke locally:
