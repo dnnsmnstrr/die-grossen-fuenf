@@ -8,48 +8,42 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const RSS_FEED_URL = 'https://festundflauschig.de/feed'; // Placeholder, replace with actual feed if different
 const TEMP_DIR = path.join(process.cwd(), 'temp');
 
-async function getLatestEpisodeUrl() {
-  console.log('Fetching RSS feed...');
-  const response = await axios.get(RSS_FEED_URL);
-  const xml = response.data;
-  
-  // Simple regex to find the first enclosure url
-  const match = xml.match(/<enclosure[^>]+url="([^"]+)"/);
-  if (!match) throw new Error('No podcast episode found in RSS feed');
-  
-  return match[1];
-}
-
-async function downloadAndCompress(url: string) {
-  if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR);
-  const inputPath = path.join(TEMP_DIR, 'episode.mp3');
-  const outputPath = path.join(TEMP_DIR, 'episode_low.mp3');
-
-  console.log('Downloading episode...');
+/**
+ * Downloads a file from a URL.
+ */
+async function downloadFile(url: string, outputPath: string) {
+  console.log(`Downloading episode from ${url}...`);
   const response = await axios({
     url,
     method: 'GET',
     responseType: 'stream'
   });
 
-  const writer = fs.createWriteStream(inputPath);
+  const writer = fs.createWriteStream(outputPath);
   response.data.pipe(writer);
 
   await new Promise((resolve, reject) => {
     writer.on('finish', resolve);
     writer.on('error', reject);
   });
+}
 
+/**
+ * Compresses audio to 32kbps mono for Whisper.
+ */
+async function compressAudio(inputPath: string): Promise<string> {
+  const outputPath = path.join(TEMP_DIR, 'episode_compressed.mp3');
   console.log('Compressing with ffmpeg...');
-  // Compress to 32kbps mono to fit in Whisper's 25MB limit or reduce cost/time
-  execSync(`ffmpeg -i ${inputPath} -ar 16000 -ac 1 -map 0:a:0 -b:a 32k ${outputPath} -y`);
-  
+  // Compress to 32kbps mono to fit in Whisper's 25MB limit and improve speed
+  execSync(`ffmpeg -i "${inputPath}" -ar 16000 -ac 1 -map 0:a:0 -b:a 32k "${outputPath}" -y`);
   return outputPath;
 }
 
+/**
+ * Transcribes audio file using OpenAI Whisper.
+ */
 async function transcribe(filePath: string) {
   console.log('Transcribing with Whisper...');
   const transcription = await openai.audio.transcriptions.create({
@@ -60,6 +54,9 @@ async function transcribe(filePath: string) {
   return transcription.text;
 }
 
+/**
+ * Extracts Ranking JSON from transcript using GPT-4o.
+ */
 async function extractRankingFromText(text: string) {
   console.log('Extracting rankings with GPT-4o...');
   const prompt = `
@@ -95,9 +92,27 @@ async function extractRankingFromText(text: string) {
 }
 
 async function run() {
+  const source = process.argv[2];
+
+  if (!source) {
+    console.error('Usage: tsx scripts/extract-ranking.ts <URL_OR_FILE_PATH>');
+    process.exit(1);
+  }
+
   try {
-    const url = await getLatestEpisodeUrl();
-    const compressedPath = await downloadAndCompress(url);
+    if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR);
+
+    let audioPath = source;
+
+    // Check if source is a URL or a local file
+    if (source.startsWith('http')) {
+      audioPath = path.join(TEMP_DIR, 'episode_downloaded.mp3');
+      await downloadFile(source, audioPath);
+    } else if (!fs.existsSync(audioPath)) {
+      throw new Error(`Local file not found: ${audioPath}`);
+    }
+
+    const compressedPath = await compressAudio(audioPath);
     const transcript = await transcribe(compressedPath);
     const newRanking = await extractRankingFromText(transcript);
 
@@ -105,16 +120,14 @@ async function run() {
       console.log('New ranking found:', newRanking.Thema);
       const rankingsPath = path.join(process.cwd(), 'src/data/rankings.ts');
       
-      // Read existing rankings
       let currentFileContent = fs.readFileSync(rankingsPath, 'utf-8');
-      // Simple injection: find the start of the array and insert
       const arrayStart = currentFileContent.indexOf('[');
       const updatedContent = currentFileContent.slice(0, arrayStart + 1) + 
         '\\n  ' + JSON.stringify(newRanking, null, 2) + ',' +
         currentFileContent.slice(arrayStart + 1);
 
       fs.writeFileSync(rankingsPath, updatedContent);
-      console.log('Updated src/data/rankings.ts');
+      console.log('Successfully updated src/data/rankings.ts');
     } else {
       console.log('No ranking found in this episode.');
     }
@@ -122,7 +135,6 @@ async function run() {
     console.error('Pipeline failed:', error);
     process.exit(1);
   } finally {
-    // Cleanup
     if (fs.existsSync(TEMP_DIR)) {
       fs.rmSync(TEMP_DIR, { recursive: true, force: true });
     }
